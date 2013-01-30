@@ -18,17 +18,17 @@ void formattedOutput (FILE *fpSrc, FILE *fpDst, int iIndex, long lOffset, int iL
 void fprintfSP (FILE *fpDst, BYTE byteIndex,int *ipCount ,FILE *fpSrc, char strTable[0xff + 1][10]);
 
 
-//特殊控制字符，从0xFA开始
 static char *ctrlChar[] = 
 {
+	//特殊控制字符，从0xFA开始
 	"[翻页]","[换页]","[c]","[$]","[换行]","[结束]"
 };
 
 int main (int argc, char *argv[])
 {
 	txtExt *linkList;									//用来储存文本区间的结构体，链表类型的
-	int c, 
-		count = 0;
+	int c;
+	int count = 0;
 	long lCount = 0;
 	char strRom [MAX_FILE_NAME_LENGTH] = "farm.gba",	//Rom的文件名 
 		 strCodingList [MAX_FILE_NAME_LENGTH] = "encoding.txt",		//码表的文件名
@@ -174,9 +174,9 @@ int main (int argc, char *argv[])
 	return 0;
 }
 
-//将码表存入字符串数组strTable里面
 void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10])
 {
+	//将码表存入字符串数组strTable里面
 	int iCount = 0;
 	long lOffset = 0;
 	char * stopStr;
@@ -211,9 +211,9 @@ void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10])
 }
 
 
-//将记录文本区间的数据读入txtExt链表中，返回链表头
 txtExt *getAddrTable (FILE *fp)
 {
+	//将记录文本区间的数据读入txtExt链表中，返回链表头
 	txtExt *head = NULL;
 	txtExt *linkListTmp;
 	long lTmp = 0;
@@ -265,9 +265,9 @@ txtExt *getAddrTable (FILE *fp)
 	return head;
 }
 
-//清空地址链表
 void clearAddrTable (txtExt *head)
 {
+	//清空地址链表
 	txtExt	*pLink1 = head,
 			*pLink2 = head;
 	while (NULL != pLink2)
@@ -278,9 +278,9 @@ void clearAddrTable (txtExt *head)
 	}
 }
 
-//获取一段对话
 void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xff + 1][10])
 {
+	//获取一段对话
 	int iSentenceCount = 0,
 		iLength;
 	long lAddrOffset = 0;
@@ -323,12 +323,12 @@ void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0x
 }
 
 
-//格式化输出一段话
 void formattedOutput (	FILE *fpSrc, FILE *fpDst, 
 		int iIndex, long lOffset, int iLength, int iWidth, 
 		char strTable[0xff + 1][10]
 		)
 {
+	//格式化输出一段话
 	int iCount, iTmp;
 	BYTE byteTmp;
 
@@ -408,9 +408,9 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 }
 
 
-//在程序需要的码表中插入特殊控制符
 void insertCtrlChar (char strTable[0xff + 1][10])
 {
+	//在程序需要的码表中插入特殊控制符
 	int index = 0xFA, count = 0;
 	for (index = 0xFA, count = 0; index <= 0xFF; index ++, count ++)
 	{
@@ -418,9 +418,9 @@ void insertCtrlChar (char strTable[0xff + 1][10])
 	}
 }
 
-//输出包含变量的句子
 void fprintfSP (FILE *fpDst, BYTE byteIndex,int *ipCount ,FILE *fpSrc, char strTable[0xff + 1][10])
 {
+	//输出包含变量的句子
 	BYTE byteColor, byteVar;
 	BYTE byteColor1, byteColor2;
 	char strTmp [MAX_STRING_LENGTH] = {0};
