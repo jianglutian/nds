@@ -15,7 +15,7 @@ typedef unsigned long DWORD;
 
 #define MAX_FILE_NAME_LENGTH 127	//文件名的最大长度
 #define MAX_FILE_COUNT 0xfff
-#define MAX_STRING_LENGTH 512		//字符串的最大长度
+#define MAX_STRING_LENGTH 0xFF		//字符串的最大长度
 
 #define FILL_BYTE	((BYTE)(0xff))
 #define ZERO_BYTE	((BYTE)(0x00))

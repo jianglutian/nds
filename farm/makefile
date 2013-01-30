@@ -1,2 +1,5 @@
 export.exe: export.c
-	gcc export.c -o export.exe
+	gcc export.c -g -o out.exe
+
+clean:
+	rm out.exe

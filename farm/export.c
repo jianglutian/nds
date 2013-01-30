@@ -1,27 +1,25 @@
-
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define	ENCODING_TEST
-//#define	ENCODING_DEBUG
+#define	ENCODING_DEBUG
+//#define LINK_DEBUG
 #endif
 //#define COLOR_TWO
 
 #include "export.h"
 
-void getCodingTable (FILE * fp, char chTable[][]);
-void insertCtrlChar (char chTable[][]);
+void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10]);
+void insertCtrlChar (char strTable[0xff + 1][10]);
 txtExt * getAddrTable (FILE *fp);
 void clearAddrTable (txtExt *head);
-void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[][]);
-void formattedOutput (FILE *fpSrc, FILE *fpDst,
-		int iIndex, long lOffset, int iLength, int iWidth,
-		char strTable[0xff + 1][10]);
+void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xff + 1][10]);
+void formattedOutput (FILE *fpSrc, FILE *fpDst, int iIndex, long lOffset, int iLength, int iWidth, char strTable[0xff + 1][10]);
 void fprintfSP (FILE *fpDst, BYTE byteIndex,int *ipCount ,FILE *fpSrc, char strTable[0xff + 1][10]);
 
 
 //特殊控制字符，从0xFA开始
-char *ctrlChar[] = 
+static char *ctrlChar[] = 
 {
 	"[翻页]","[换页]","[c]","[$]","[换行]","[结束]"
 };
@@ -30,18 +28,18 @@ int main (int argc, char *argv[])
 {
 	txtExt *linkList;									//用来储存文本区间的结构体，链表类型的
 	int c, 
-	    count = 0;
+		count = 0;
 	long lCount = 0;
-	char strRom [MAX_FILE_NAME_LENGTH] = "PMFRUS_CHPLUS_RELEASE3.gba",	//Rom的文件名 
-	     strCodingList [MAX_FILE_NAME_LENGTH] = "codingList.txt",		//码表的文件名
-	     strOffsetAddr [MAX_FILE_NAME_LENGTH] = "offsetAddr.txt",		//文本区间的文件名
-	     strOutFile [MAX_FILE_NAME_LENGTH] = "text.txt",	//导出的文本的文件名
-	     strBuffer[MAX_STRING_LENGTH];
+	char strRom [MAX_FILE_NAME_LENGTH] = "farm.gba",	//Rom的文件名 
+		 strCodingList [MAX_FILE_NAME_LENGTH] = "encoding.txt",		//码表的文件名
+		 strOffsetAddr [MAX_FILE_NAME_LENGTH] = "addr.txt",		//文本区间的文件名
+		 strOutFile [MAX_FILE_NAME_LENGTH] = "text.txt",	//导出的文本的文件名
+		 strBuffer[MAX_STRING_LENGTH];
 
 	FILE	* fpCodingList,		//指向码表的file指针
-		* fpRom,		//指向gba的rom的file指针
-		* fpOffsetAddr,		//指向文本区间的file指针
-		* fpOutTxt;		//指向导出文本的file指针
+			* fpRom,		//指向gba的rom的file指针
+			* fpOffsetAddr,		//指向文本区间的file指针
+			* fpOutTxt;		//指向导出文本的file指针
 
 #ifdef DEBUG
 	int iDebugCount;
@@ -51,10 +49,11 @@ int main (int argc, char *argv[])
 	FILE	* fpTest;
 #endif
 
-	char strTable[0xff + 1][10] = {0},	//游戏的对照码表
-	     *stopStr;
+	char strTable[0xffff + 1][10] = {0},	//游戏的对照码表
+		 *stopStr;
 
 	while ((c = getopt (argc, argv, "a:c:o:r:")) != -1)
+	{
 		switch (c)
 		{
 			case 'a':				
@@ -106,6 +105,7 @@ int main (int argc, char *argv[])
 			default:
 				abort ();
 		}
+	}
 
 	//这里开始读取各个所需的rom和码表、文本区间
 
@@ -134,7 +134,7 @@ int main (int argc, char *argv[])
 
 	//将码表存入字符串数组strTable里面
 	getCodingTable (fpCodingList, strTable);
-	insertCtrlChar(strTable);
+	//insertCtrlChar(strTable);
 
 
 	//将记录文本区间的数据读入txtExt链表中，返回链表头
@@ -181,6 +181,7 @@ void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10])
 	long lOffset = 0;
 	char * stopStr;
 	char strBuffer[MAX_STRING_LENGTH];
+	char * strTmp;
 	while(fgets (strBuffer, MAX_STRING_LENGTH, fp) != NULL)
 	{
 		if (strBuffer[strlen(strBuffer)-1] == '\n')
@@ -189,10 +190,17 @@ void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10])
 		//从字符串中获取十六进制的数字
 		lOffset = strtol(strBuffer, &stopStr, 16);
 
+		strTmp = strstr(strBuffer, stopStr);
+		if (!strTmp || !*(strTmp + 1))
+		{
+			printf ("Error.\n");
+			exit(3);
+		}
+
 		//注意：strTable里面的字符串长度从3到6不等
-		strcpy (strTable[lOffset], strBuffer + 3);
+		strcpy (strTable[lOffset], strTmp + 1);
 #ifdef ENCODING_DEBUG
-		printf ("%d=%s\n", lOffset, strTable[lOffset]);
+		printf ("0x%X=%s\n", lOffset, strTable[lOffset]);
 #endif
 		++ iCount;
 
@@ -200,17 +208,6 @@ void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10])
 #ifdef	ENCODING_DEBUG
 	printf ("iCount = %d\n", iCount);
 #endif
-
-	//单独赋给00为空格
-	strcpy (strTable[0x00], " ");
-	for (iCount = 0; iCount < (0xff + 1); iCount ++ )
-	{
-		if (0 == strcmp (strTable[iCount], ""))
-		{
-			sprintf (strBuffer, "[%02Xh]", iCount);
-			strcpy (strTable[iCount], strBuffer);
-		}
-	}
 }
 
 
@@ -221,7 +218,7 @@ txtExt *getAddrTable (FILE *fp)
 	txtExt *linkListTmp;
 	long lTmp = 0;
 	char strTmp[MAX_STRING_LENGTH]={0},
-	     *stopStr;
+		 *stopStr;
 
 	while (NULL != fgets (strTmp, MAX_STRING_LENGTH, fp))
 	{
@@ -272,7 +269,7 @@ txtExt *getAddrTable (FILE *fp)
 void clearAddrTable (txtExt *head)
 {
 	txtExt	*pLink1 = head,
-		*pLink2 = head;
+			*pLink2 = head;
 	while (NULL != pLink2)
 	{
 		pLink1 = pLink2;
@@ -285,7 +282,7 @@ void clearAddrTable (txtExt *head)
 void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xff + 1][10])
 {
 	int iSentenceCount = 0,
-	    iLength;
+		iLength;
 	long lAddrOffset = 0;
 	BYTE byteTmp ;
 
