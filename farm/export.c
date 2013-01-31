@@ -1,8 +1,8 @@
 #define DEBUG
 
 #ifdef DEBUG
-#define	ENCODING_TEST
-#define	ENCODING_DEBUG
+//#define	ENCODING_TEST
+//#define	ENCODING_DEBUG
 //#define LINK_DEBUG
 #endif
 //#define COLOR_TWO
@@ -157,9 +157,12 @@ int main (int argc, char *argv[])
 #ifdef ENCODING_TEST
 	fpTest = fopen ("test.txt", "wb");
 	count = 0;
-	while (count < 0xff + 1)
+	while (count < 0xffff + 1)
 	{
-		fprintf (fpTest, "%2X = %s\n", count, strTable[count]);
+		if (strcmp(strTable[count], ""))
+		{
+			fprintf (fpTest, "%4X = %s\n", count, strTable[count]);
+		}
 		count++;
 	}
 	printf ("count = %d\n", count);
