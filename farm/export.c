@@ -52,6 +52,8 @@ int main (int argc, char *argv[])
 	char strTable[0xffff + 1][10] = {0},	//游戏的对照码表
 		 *stopStr;
 
+	/////////////////////////////////////////////////////////////
+	// 程序运行参数解析
 	while ((c = getopt (argc, argv, "a:c:o:r:")) != -1)
 	{
 		switch (c)
@@ -106,6 +108,8 @@ int main (int argc, char *argv[])
 				abort ();
 		}
 	}
+	// 程序运行参数解析
+	/////////////////////////////////////////////////////////////
 
 	//这里开始读取各个所需的rom和码表、文本区间
 
@@ -203,7 +207,7 @@ void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10])
 		//注意：strTable里面的字符串长度从3到6不等
 		strcpy (strTable[lOffset], strTmp + 1);
 #ifdef ENCODING_DEBUG
-		printf ("0x%X=%s\n", lOffset, strTable[lOffset]);
+		printf ("0x%lX=%s\n", lOffset, strTable[lOffset]);
 #endif
 		++ iCount;
 
@@ -289,22 +293,22 @@ void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0x
 	long lAddrOffset = 0;
 	BYTE byteTmp ;
 
-	//该层循环用于在各个文本区间里面导出文本
 	for (; NULL != linkList; linkList = linkList -> next)
 	{
+		//该层循环用于在各个文本区间里面导出文本
 		lAddrOffset = linkList -> start;
 		fseek (fpSrc, lAddrOffset, SEEK_SET);
 
 
-		//该层循环用于在某个文本区间中导出具体句子
 		while (lAddrOffset <= (linkList -> end))
 		{
+			//该层循环用于在某个文本区间中导出具体句子
 			fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
 			iLength = 1;
 
-			//遍历完整的一句话
 			while ((BYTE)0xff != byteTmp)		
 			{
+				//遍历完整的一句话
 				fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
 #ifdef OUTPUT_TEST
 
@@ -351,7 +355,7 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 	//	#endif
 
 	fprintf (fpDst, "No.%d\r\n", iIndex);
-	fprintf (fpDst, "%08Xh,%d\r\n", lOffset, iLength);
+	fprintf (fpDst, "%08Xh,%d\r\n", (int)lOffset, iLength);
 	fprintf (fpDst, "－－－－－－－－－－－－－－－－\r\n");
 	fseek (fpSrc, lOffset, SEEK_SET);
 	iTmp = iLength;
