@@ -1,0 +1,12 @@
+*.PAK
+*.exe
+*.rar
+*.swp
+*.bin
+*.bin*
+tags
+cscope.*
+*.txt
+*.sav
+1183export
+uncompress
