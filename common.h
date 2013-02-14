@@ -2,7 +2,7 @@
 #define COMMON_H
 
 #include <stdio.h>
-#include <conio.h>
+//#include <conio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
