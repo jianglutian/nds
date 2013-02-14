@@ -289,22 +289,22 @@ void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0x
 	long lAddrOffset = 0;
 	BYTE byteTmp ;
 
-	//该层循环用于在各个文本区间里面导出文本
 	for (; NULL != linkList; linkList = linkList -> next)
 	{
+		//该层循环用于在各个文本区间里面导出文本
 		lAddrOffset = linkList -> start;
 		fseek (fpSrc, lAddrOffset, SEEK_SET);
 
 
-		//该层循环用于在某个文本区间中导出具体句子
 		while (lAddrOffset <= (linkList -> end))
 		{
+			//该层循环用于在某个文本区间中导出具体句子
 			fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
 			iLength = 1;
 
-			//遍历完整的一句话
 			while ((BYTE)0xff != byteTmp)		
 			{
+				//遍历完整的一句话
 				fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
 #ifdef OUTPUT_TEST
 
