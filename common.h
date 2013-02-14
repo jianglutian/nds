@@ -7,6 +7,13 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#if defined(WIN32) || defined(WIN64) 
+#include <windows.h> 
+#define sleep(n) Sleep(1000 * (n)) 
+#else 
+#include <unistd.h> 
+#endif
+
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef unsigned long ULONG;

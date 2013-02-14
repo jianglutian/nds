@@ -3,19 +3,20 @@
 #ifdef DEBUG
 //#define	ENCODING_TEST
 //#define	ENCODING_DEBUG
-//#define LINK_DEBUG
+//#define 	LINK_DEBUG
+#define 	OUTPUT_TEST
 #endif
 //#define COLOR_TWO
 
 #include "export.h"
 
 void getCodingTable (FILE * fp, char strTable[MAX_STRING_LENGTH][10]);
-void insertCtrlChar (char strTable[0xff + 1][10]);
+void insertCtrlChar (char strTable[0xffff + 1][10]);
 txtExt * getAddrTable (FILE *fp);
 void clearAddrTable (txtExt *head);
-void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xff + 1][10]);
-void formattedOutput (FILE *fpSrc, FILE *fpDst, int iIndex, long lOffset, int iLength, int iWidth, char strTable[0xff + 1][10]);
-void fprintfSP (FILE *fpDst, BYTE byteIndex,int *ipCount ,FILE *fpSrc, char strTable[0xff + 1][10]);
+void transformParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xffff + 1][10]);
+void formattedOutput (FILE *fpSrc, FILE *fpDst, int iIndex, long lOffset, int iLength, int iWidth, char strTable[0xffff + 1][10]);
+void fprintfSP (FILE *fpDst, WORD wordIndex,int *ipCount ,FILE *fpSrc, char strTable[0xffff + 1][10]);
 
 
 static char *ctrlChar[] = 
@@ -152,7 +153,7 @@ int main (int argc, char *argv[])
 		exit (0);
 	}
 
-	getParagraph (fpRom, fpOutTxt, linkList, strTable);
+	transformParagraph (fpRom, fpOutTxt, linkList, strTable);
 
 #ifdef ENCODING_TEST
 	fpTest = fopen ("test.txt", "wb");
@@ -240,7 +241,6 @@ txtExt *getAddrTable (FILE *fp)
 		}
 		else
 		{
-
 			if (NULL == (linkListTmp -> next = (txtExt *)malloc (sizeof (txtExt))))
 			{
 				printf ("Out of memory when malloc\n");
@@ -251,7 +251,8 @@ txtExt *getAddrTable (FILE *fp)
 
 		linkListTmp -> start = lTmp;
 
-		lTmp = strtol (strTmp + 8, &stopStr, 16);
+		if (strchr(strTmp, '-'))
+			lTmp = strtol (strchr(strTmp, '-') + 1, &stopStr, 16);
 		linkListTmp -> end = lTmp;
 		lTmp = strtol (strTmp + 15, &stopStr, 16);
 		linkListTmp -> iWidth = (int)lTmp;
@@ -281,7 +282,7 @@ void clearAddrTable (txtExt *head)
 	}
 }
 
-void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xff + 1][10])
+void transformParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0xffff + 1][10])
 {
 	//获取一段对话
 	int iSentenceCount = 0,
@@ -302,7 +303,19 @@ void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0x
 			fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
 			iLength = 1;
 
-			while ((BYTE)0xff != byteTmp)		
+			if ((BYTE)0x00 != byteTmp)		
+			{
+#ifdef OUTPUT_TEST
+				printf("Addr: %X\n", lAddrOffset);
+				printf ("%02X ", (int)byteTmp);
+#endif
+			}
+			else
+			{
+				continue;
+			}
+
+			while ((BYTE)0x00 != byteTmp)		
 			{
 				//遍历完整的一句话
 				fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
@@ -314,7 +327,7 @@ void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0x
 			}
 #ifdef OUTPUT_TEST
 			printf ("\n");
-			sleep (1000);
+			sleep (1);
 #endif
 			iSentenceCount ++;
 			formattedOutput (fpSrc, fpDst, 
@@ -328,12 +341,14 @@ void getParagraph (FILE *fpSrc, FILE *fpDst, txtExt * linkList, char strTable[0x
 
 void formattedOutput (	FILE *fpSrc, FILE *fpDst, 
 		int iIndex, long lOffset, int iLength, int iWidth, 
-		char strTable[0xff + 1][10]
+		char strTable[0xffff + 1][10]
 		)
 {
 	//格式化输出一段话
 	int iCount, iTmp;
 	BYTE byteTmp;
+	BYTE byteTmp2;
+	WORD wordTmp;
 
 	//消除前面多余的空格
 	fseek (fpSrc, lOffset, SEEK_SET);
@@ -360,7 +375,7 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 		for (iCount = 0; iCount < iTmp; iCount ++)
 		{
 			fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
-			if (byteTmp == 0xFA||byteTmp == 0xFB||byteTmp == 0xFE)
+			if (byteTmp == 0x00)
 			{
 				fprintf (fpDst, "%s", strTable[byteTmp]);	
 				iCount ++;
@@ -368,7 +383,9 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 			}
 			else
 			{
-				fprintfSP (fpDst, byteTmp, &iCount, fpSrc, strTable);
+				fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
+				wordTmp = byteTmp << 8 | byteTmp2;
+				fprintfSP (fpDst, wordTmp, &iCount, fpSrc, strTable);
 			}
 		}
 		fprintf (fpDst, "\r\n");
@@ -386,7 +403,7 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 		for (iCount = 0; iCount < iTmp; iCount ++)
 		{
 			fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
-			if (byteTmp == 0xFA||byteTmp == 0xFB||byteTmp == 0xFE)
+			if (byteTmp == 0x00)
 			{
 				fprintf (fpDst, "%s", strTable[byteTmp]);	
 				iCount ++;
@@ -394,7 +411,9 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 			}
 			else
 			{
-				fprintfSP (fpDst, byteTmp, &iCount, fpSrc, strTable);
+				fread (&byteTmp, sizeof (BYTE), 1, fpSrc);
+				wordTmp = byteTmp << 8 | byteTmp2;
+				fprintfSP (fpDst, wordTmp, &iCount, fpSrc, strTable);
 			}
 		}
 		fprintf (fpDst, "\r\n");
@@ -411,7 +430,7 @@ void formattedOutput (	FILE *fpSrc, FILE *fpDst,
 }
 
 
-void insertCtrlChar (char strTable[0xff + 1][10])
+void insertCtrlChar (char strTable[0xffff + 1][10])
 {
 	//在程序需要的码表中插入特殊控制符
 	int index = 0xFA, count = 0;
@@ -421,64 +440,15 @@ void insertCtrlChar (char strTable[0xff + 1][10])
 	}
 }
 
-void fprintfSP (FILE *fpDst, BYTE byteIndex,int *ipCount ,FILE *fpSrc, char strTable[0xff + 1][10])
+void fprintfSP (FILE *fpDst, WORD wordIndex,int *ipCount ,FILE *fpSrc, char strTable[0xffff + 1][10])
 {
 	//输出包含变量的句子
 	BYTE byteColor, byteVar;
 	BYTE byteColor1, byteColor2;
 	char strTmp [MAX_STRING_LENGTH] = {0};
-	switch (byteIndex)
+	switch (wordIndex)
 	{
-		case 0xFC:
-#ifdef COLOR_TWO
-			fread (&byteColor1, sizeof (BYTE), 1, fpSrc);
-			fread (&byteColor2, sizeof (BYTE), 1, fpSrc);
-			fprintf (fpDst, "[c0x%02X%02X]", byteColor1, byteColor2);
-			*ipCount += 2;
-#else
-			fread (&byteColor, sizeof (BYTE), 1, fpSrc);
-			fprintf (fpDst, "[c0x%02X]", byteColor);
-			*ipCount += 1;
-#endif
-			break;
-		case 0xFD:
-			fread (&byteVar, sizeof (BYTE), 1, fpSrc);
-#ifndef VAR_SPECIAL
-			fprintf (fpDst, "[$%1d]", byteVar);
-#else
-			switch (byteVar)
-			{
-				case 0x01:
-					byteVar ='n';
-					break;
-				case 0x05:
-					byteVar ='f';
-					break;
-				case 0x02:
-					byteVar ='1';
-					break;
-				case 0x03:
-					byteVar ='2';
-					break;
-				case 0x04:
-					byteVar ='3';
-					break;
-				case 0x06:
-					byteVar ='4';
-					break;
-				case 0x07:
-					byteVar ='5';
-					break;
-				default:
-					break;		
-			}
-
-			fprintf (fpDst, "[$%c]", byteVar);
-
-#endif
-			*ipCount += 1;
-			break;
 		default:
-			fprintf (fpDst, "%s", strTable[byteIndex]);
+			fprintf (fpDst, "%s", strTable[wordIndex]);
 	}
 }
