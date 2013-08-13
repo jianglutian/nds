@@ -5,8 +5,8 @@
 *.bin
 *.bin*
 tags
+TAGS
 cscope.*
-*.txt
 *.sav
 1183export
 uncompress

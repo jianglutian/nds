@@ -1,77 +1,27 @@
-/*
-No.177
-001C2EC0,59
-－－－－－－－－－－－－－－－－
-These waters are treacherous!
-You shouldn't come back here!
-－－－－－－－－－－－－－－－－
-These waters are treacherous!
-You shouldn't come back here!
-－－－－－－－－－－－－－－－－
-=========================================
-17个减号（16个汉字+一个控制符）
-
-当译文比原文长的时候需要有标记，方便导入时改变偏移地址
-*/
-
-#define DEBUG
-
-#ifdef DEBUG
-//#define ENCODING_TEST
-//#define ENCODING_DEBUG
-//#define TXT_READ_DEBUG
-//#define DUMP_DEBUG
-#define DEBUG_TRACE
-#endif
-
-
 #include "import.h"
 
-void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10]);
-void getCodingLength (char strTable[CODING_LENGTH + 1][10], int * iarrLength);
-//void insertCtrlChar (char chTable[][]);
-int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt, 
-		char strTable[CODING_LENGTH + 1][10], int *iarrLength,
-		txtExt *linkList);
-int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLength,
-		BYTE *pbyteBuffer);
-void skipBOM (FILE *fp);
-char *fGetLine (char * strBuffer, FILE * fp);
-int fGetCutLine (char * strBuffer, FILE * fp);
-int renewTextAddr (FILE *fp, ULONG ulOldAddr, ULONG ulNewAddr);
-txtExt *getAddrTable (FILE *fp);
-int isInsertDirectly(ULONG ulAddr, txtExt * linkList);
 
-
-#ifdef DEBUG_TRACE
-FILE *fpDEBUG;
-#endif
-
-FILE *fpError;
-long g_lErrorNo = 0;
-BYTE *g_pbyRom;
-long g_lRomLength = 0;
-	
 int main (int argc, char *argv[])
 {
 	int	iMenuParam;	//程序调用参数解析用
-		//iCount = 0;
-	//long lCount = 0;
-	char	
-		//Rom的文件名
-		strRom [MAX_FILE_NAME_LENGTH] = "PMFRUS_CHPLUS_RELEASE3.gba",
-		//码表的文件名
-		strCodingList [MAX_FILE_NAME_LENGTH] = "codingList.txt",	
-		//导入的文本的文件名
-		strSrcTxt [MAX_FILE_NAME_LENGTH] = "text.txt",		
-		strDirAddr [MAX_FILE_NAME_LENGTH] = "addrOffset.txt";
-		//strBuffer[MAX_STRING_LENGTH];
 
-	FILE	* fpCodingList,		//指向码表的file指针
-		* fpRom,		//指向gba的rom的file指针
-		* fpSrcTxt,		//指向翻译文本的file指针
-		* fpDirAddr;		//指向不要超长的文本的区间的file指针
-	txtExt *linkList;
+	//Rom的文件名
+	char strRom [MAX_FILE_NAME_LENGTH] = "PMFRUS_CHPLUS_RELEASE3.gba";
+
+	//码表的文件名
+	char strCodingList [MAX_FILE_NAME_LENGTH] = "codingList.txt";	
+
+	//导入的文本的文件名
+	char strSrcTxt [MAX_FILE_NAME_LENGTH] = "text.txt";		
+
+	//导入空闲地址区间
+	char strDirAddr [MAX_FILE_NAME_LENGTH] = "addrOffset.txt";
+
+	FILE* fpCodingList;		//指向码表的file指针
+	FILE* fpRom;			//指向gba的rom的file指针
+	FILE* fpSrcTxt;			//指向翻译文本的file指针
+	FILE* fpDirAddr;		//指向不要超长的文本的区间的file指针
+	txtExt* linkList;
 
 
 
@@ -80,7 +30,6 @@ int main (int argc, char *argv[])
 #endif
 	int  iarrLength [CODING_LENGTH + 1];		//码表中各个字符串的长度
 	char strTable[CODING_LENGTH + 1][10] = {{0}};	//游戏的对照码表
-	     //*stopStr;
 
 #ifdef DEBUG_TRACE
 	if (NULL == (fpDEBUG = fopen( "DEBUG.txt", "wb")))
@@ -93,61 +42,61 @@ int main (int argc, char *argv[])
 	//*************************************
 	//对命令行的参数进行解析
 	//*************************************
-       	while ((iMenuParam = getopt (argc, argv, "a:c:s:r:")) != -1)
+	while ((iMenuParam = getopt (argc, argv, "a:c:s:r:")) != -1)
 	{
 		switch (iMenuParam)
 		{
-		//指定非超长处理的文件名
-           	case 'a':
-   			if ('-' == optarg[0])
-			{
-				printf ("Option -%c requires an argument.\n", iMenuParam);
-				exit (0);
-			}
-			strcpy (strDirAddr, optarg);
-			break;
-		//指定码表文件名
-           	case 'c':
-   			if ('-' == optarg[0])
-			{
-				printf ("Option -%c requires an argument.\n", iMenuParam);
-				exit (0);
-			}
-			strcpy (strCodingList, optarg);
-			break;
-		//指定导入文本文件名
-           	case 's':
-   			if ('-' == optarg[0])
-			{
-				printf ("Option -%c requires an argument.\n", iMenuParam);
-				exit (0);
-			}
-			strcpy (strSrcTxt, optarg);
-			break;
-		//指定rom文件名
-           	case 'r':
-   			if ('-' == optarg[0])
-			{
-				printf ("Option -%c requires an argument.\n", iMenuParam);
-				exit (0);
-			}
-			strcpy (strRom, optarg);
-			break;
-           	case '?':
-			if ('c' == optopt || 'r' == optopt || 's' == optopt ||'a' == optopt)
-				;
-			else if (optopt == '?')
-				;
-			else if (isprint (optopt))
-				fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-			else
-				fprintf (stderr, "Unknown option character `\\x%x'.\n",	optopt);
-			printf ("口袋妖怪火红文本导入程序\n");
-			printf ("%s [-r rom文件] [-c 码表文件] [-s 导入文本文件名] [-a 直接导入的文本区间文件]\n", argv[0]);
-			return 1;
-		default:
-			abort ();
-           	}
+			//指定非超长处理的文件名
+			case 'a':
+				if ('-' == optarg[0])
+				{
+					printf ("Option -%c requires an argument.\n", iMenuParam);
+					exit (0);
+				}
+				strcpy (strDirAddr, optarg);
+				break;
+				//指定码表文件名
+			case 'c':
+				if ('-' == optarg[0])
+				{
+					printf ("Option -%c requires an argument.\n", iMenuParam);
+					exit (0);
+				}
+				strcpy (strCodingList, optarg);
+				break;
+				//指定导入文本文件名
+			case 's':
+				if ('-' == optarg[0])
+				{
+					printf ("Option -%c requires an argument.\n", iMenuParam);
+					exit (0);
+				}
+				strcpy (strSrcTxt, optarg);
+				break;
+				//指定rom文件名
+			case 'r':
+				if ('-' == optarg[0])
+				{
+					printf ("Option -%c requires an argument.\n", iMenuParam);
+					exit (0);
+				}
+				strcpy (strRom, optarg);
+				break;
+			case '?':
+				if ('c' == optopt || 'r' == optopt || 's' == optopt ||'a' == optopt)
+					;
+				else if (optopt == '?')
+					;
+				else if (isprint (optopt))
+					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+				else
+					fprintf (stderr, "Unknown option character `\\x%x'.\n",	optopt);
+				printf ("口袋妖怪火红文本导入程序\n");
+				printf ("%s [-r rom文件] [-c 码表文件] [-s 导入文本文件名] [-a 直接导入的文本区间文件]\n", argv[0]);
+				return 1;
+			default:
+				abort ();
+		}
 	}
 	//**************************************
 	//解析结束
@@ -251,22 +200,22 @@ void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10])
 	while(fgets (strBuffer, MAX_STRING_LENGTH, fp) != NULL)
 	{
 		if (strBuffer[strlen(strBuffer)-1] == '\n')
-		strBuffer[strlen(strBuffer)-1] = '\0'; 
+			strBuffer[strlen(strBuffer)-1] = '\0'; 
 
 		//从字符串中获取十六进制的数字
 		lOffset = strtol(strBuffer, &stopStr, 16);
 
 		//注意：strTable里面的字符串长度从3到6不等
 		strcpy (strTable[lOffset], stopStr + 1);
-		#ifdef ENCODING_DEBUG
-			printf ("%d=%s\n", lOffset, strTable[lOffset]);
-		#endif
+#ifdef ENCODING_DEBUG
+		printf ("%d=%s\n", lOffset, strTable[lOffset]);
+#endif
 		++ iCount;
 
 	}
-	#ifdef	ENCODING_DEBUG
+#ifdef	ENCODING_DEBUG
 	printf ("iCount = %d\n", iCount);
-	#endif
+#endif
 
 	//单独赋给00为空格
 	strcpy (strTable[0x00], " ");
@@ -339,20 +288,20 @@ void getCodingLength (char strTable[CODING_LENGTH + 1][10], int * iarrLength)
 //修改记录：
 //==================================================================
 int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
-	       	char strTable[CODING_LENGTH + 1][10], int *iarrLength, txtExt * linkList)
+		char strTable[CODING_LENGTH + 1][10], int *iarrLength, txtExt * linkList)
 {
-	int iSentenceCount = 0, 
-	    iMissed = 0, 
-	    iTmp,
-	    iSentenceLength = 0,
-	    iTranslatedLength = 0,
-	    iSkip = 0;
+	int iSentenceCount = 0;
+	int iMissed = 0;
+	int iTmp;
+	int iSentenceLength = 0;
+	int iTranslatedLength = 0;
+	int iSkip = 0;
 	ULONG ulAddr = 0;
 	static ULONG ulNewAddr = 0xEB1000;
-	char strLine[MAX_STRING_LENGTH],
-	     strBuffer[MAX_STRING_LENGTH],
-	     *pchStopChar,
-	     *szTmp;
+	char strLine[MAX_STRING_LENGTH];
+	char strBuffer[MAX_STRING_LENGTH];
+	char *pchStopChar;
+	char *szTmp;
 	BYTE *pbyteBuffer;
 
 	//可能存在的三字节bom头需要跳过（UTF-8编码）
@@ -377,10 +326,10 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 			iSentenceCount = iTmp;
 		}
 
-		#ifdef TXT_READ_DEBUG
-			printf ("Find \"%s\".\n", strLine);
-		#endif
-	
+#ifdef TXT_READ_DEBUG
+		printf ("Find \"%s\".\n", strLine);
+#endif
+
 		//printf ("Start No. %d sentence.\n", iSentenceCount);
 		g_lErrorNo = iSentenceCount;
 		//序号完后应该是句子在rom中的地址和句子的长度
@@ -392,7 +341,7 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 
 		//获取句子在rom中的地址
 		ulAddr = strtol (strLine, &pchStopChar, 16);
-		
+
 		//获取原文的长度
 		szTmp = pchStopChar + 2;
 		iSentenceLength = strtol (szTmp, &pchStopChar, 10);
@@ -406,7 +355,7 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 		while (0 == fGetCutLine (strLine, fpSrcTxt))
 			;
 		//到这里获取完原文，下面的就是译文的处理
-	
+
 		iTranslatedLength = 0;
 		pbyteBuffer = (BYTE *)malloc (sizeof(BYTE) * iSentenceLength * 4);
 		memset (pbyteBuffer, 0, sizeof(pbyteBuffer));
@@ -435,23 +384,21 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 			else
 				iTranslatedLength += iLength;
 		}
-		
+
 		//如果有译文无法解析成功，则跳过该句话。
 		if (!iSkip)
 		{
-
 			//写入rom中
 			//在遇到译文比原文长的情况下，更新指针
-			
+
 			if (iTranslatedLength <= iSentenceLength || isInsertDirectly(ulAddr, linkList))
-				//如果译文比原文短或者在特殊区间段，直接写入
 			{
+				//如果译文比原文短或者在特殊区间段，直接写入
 				//将pbyteBuffer中的数据根据ulAddr的地址写入rom中
 				fseek (fpRom, ulAddr, SEEK_SET);
 				fwrite (pbyteBuffer, sizeof (BYTE), iTranslatedLength, fpRom);
 			}
 			else
-				//如果译文比原文长
 			{
 				//	如果译文比原文长，更新rom内的调用指针
 				//	EB1000h - EBA000h
@@ -470,13 +417,7 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 					fputs (strBuffer, fpError);
 				}
 				ulNewAddr += iTranslatedLength + 0x10;
-				//printf ("\n");
 			}
-		}
-
-		else 
-		//在log里输出未解析成功的语句
-		{
 		}
 
 		free (pbyteBuffer);
@@ -509,16 +450,16 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 		BYTE *pbyteBuffer)
 {
 	int fUnknowCode = 0,
-	    iLength = 0,
-	    iCount = 0,
-	    iStrLength = strlen (strLine);
+		iLength = 0,
+		iCount = 0,
+		iStrLength = strlen (strLine);
 	char *pchLocate = strLine,
-	     //*pchTmp,
-	     strBuf[MAX_STRING_LENGTH];
+		 //*pchTmp,
+		 strBuf[MAX_STRING_LENGTH];
 
 	//开始分析这一行的字符直至结束
 	while ((0 != strcmp (pchLocate, "")) 
-		&& ((pchLocate - strLine) < iStrLength))
+			&& ((pchLocate - strLine) < iStrLength))
 	{
 		fUnknowCode = 1;
 
@@ -527,7 +468,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 		{
 			//先分析普通字符（对应编码都是定长的）
 			if (0 == strncmp (pchLocate, strTable[iCount], iarrLength[iCount]))
-			//找到对应的码表了
+				//找到对应的码表了
 			{
 				if (iCount  <= 0xff)
 				{
@@ -571,7 +512,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 						++ iLength;
 						fUnknowCode = 0;
 						break;
-					//如果是[c]类型的变量型字符
+						//如果是[c]类型的变量型字符
 					case 0xFC:
 						byVal = strtol (pchLocate + 4, &stopStr, 16);
 						*pbyteBuffer++ = byVal;
@@ -628,7 +569,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 FIND:			;
 	}
 	//分析完成
-	
+
 #ifdef DUMP_DEBUG
 	dumpHexData (stdout, pbyteBuffer, iLength);
 	sleep (1000);
@@ -728,10 +669,10 @@ int fGetCutLine (char * strBuffer, FILE * fp)
 int renewTextAddr (FILE *fp, ULONG ulOldAddr, ULONG ulNewAddr)
 {
 	long lOrignalFpOffset = ftell (fp),
-	     lOffset;
+		 lOffset;
 	//DWORD dwData;
 	BYTE byOldAddr[4],
-	     byNewAddr[4];
+		 byNewAddr[4];
 
 	byOldAddr[0] = (BYTE) (ulOldAddr & 0xff);
 	byOldAddr[1] = (BYTE) ((ulOldAddr & (0xff << 8)) >> 8);
@@ -787,7 +728,7 @@ txtExt *getAddrTable (FILE *fp)
 		{
 			continue;
 		}
-		
+
 		if (NULL == head)
 		{
 			if (NULL == (head = linkListTmp = (txtExt *)malloc (sizeof (txtExt))))
@@ -798,7 +739,7 @@ txtExt *getAddrTable (FILE *fp)
 		}
 		else
 		{
-			
+
 			if (NULL == (linkListTmp -> next = (txtExt *)malloc (sizeof (txtExt))))
 			{
 				printf ("Out of memory when malloc\n");
@@ -817,13 +758,13 @@ txtExt *getAddrTable (FILE *fp)
 
 	if (NULL != linkListTmp)
 		linkListTmp -> next = NULL;
-	#ifdef LINK_DEBUG		//DEBUG输出链表数据
+#ifdef LINK_DEBUG		//DEBUG输出链表数据
 	for (linkListTmp = head; NULL !=linkListTmp ; linkListTmp = linkListTmp -> next)
 	{
 		printf ("start = %Xh\t", linkListTmp -> start);
 		printf ("end = %Xh\n", linkListTmp -> end);
 	}
-	#endif
+#endif
 	return head;
 }
 
