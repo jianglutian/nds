@@ -1,7 +1,7 @@
 #ifndef DUMP_H
 #define DUMP_H
 
-#include "../common.h"
+#include "common.h"
 
 void dumpHexData (FILE *fpStream, BYTE *pbyteBuf, long lLenght);
 

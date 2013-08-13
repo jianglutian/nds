@@ -27,9 +27,9 @@ You shouldn't come back here!
 
 #include "import.h"
 
-void getCodingTable (FILE * fp, char chTable[][]);
+void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10]);
 void getCodingLength (char strTable[CODING_LENGTH + 1][10], int * iarrLength);
-void insertCtrlChar (char chTable[][]);
+//void insertCtrlChar (char chTable[][]);
 int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt, 
 		char strTable[CODING_LENGTH + 1][10], int *iarrLength,
 		txtExt *linkList);
@@ -54,9 +54,9 @@ long g_lRomLength = 0;
 	
 int main (int argc, char *argv[])
 {
-	int	iMenuParam,	//程序调用参数解析用
-		iCount = 0;
-	long lCount = 0;
+	int	iMenuParam;	//程序调用参数解析用
+		//iCount = 0;
+	//long lCount = 0;
 	char	
 		//Rom的文件名
 		strRom [MAX_FILE_NAME_LENGTH] = "PMFRUS_CHPLUS_RELEASE3.gba",
@@ -64,8 +64,8 @@ int main (int argc, char *argv[])
 		strCodingList [MAX_FILE_NAME_LENGTH] = "codingList.txt",	
 		//导入的文本的文件名
 		strSrcTxt [MAX_FILE_NAME_LENGTH] = "text.txt",		
-		strDirAddr [MAX_FILE_NAME_LENGTH] = "addrOffset.txt",
-		strBuffer[MAX_STRING_LENGTH];
+		strDirAddr [MAX_FILE_NAME_LENGTH] = "addrOffset.txt";
+		//strBuffer[MAX_STRING_LENGTH];
 
 	FILE	* fpCodingList,		//指向码表的file指针
 		* fpRom,		//指向gba的rom的file指针
@@ -73,17 +73,14 @@ int main (int argc, char *argv[])
 		* fpDirAddr;		//指向不要超长的文本的区间的file指针
 	txtExt *linkList;
 
-#ifdef DEBUG
-	int iDebugCount;
-#endif
 
 
 #ifdef ENCODING_TEST
 	FILE	* fpTest;
 #endif
 	int  iarrLength [CODING_LENGTH + 1];		//码表中各个字符串的长度
-	char strTable[CODING_LENGTH + 1][10] = {0},	//游戏的对照码表
-	     *stopStr;
+	char strTable[CODING_LENGTH + 1][10] = {{0}};	//游戏的对照码表
+	     //*stopStr;
 
 #ifdef DEBUG_TRACE
 	if (NULL == (fpDEBUG = fopen( "DEBUG.txt", "wb")))
@@ -516,7 +513,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 	    iCount = 0,
 	    iStrLength = strlen (strLine);
 	char *pchLocate = strLine,
-	     *pchTmp,
+	     //*pchTmp,
 	     strBuf[MAX_STRING_LENGTH];
 
 	//开始分析这一行的字符直至结束
@@ -618,7 +615,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 		if (0 != fUnknowCode)
 		{
 #ifdef DEBUG_TRACE
-			sprintf (strBuf, "NO.%d:\r\n", g_lErrorNo);
+			sprintf (strBuf, "NO.%ld:\r\n", g_lErrorNo);
 			fputs (strBuf, fpDEBUG);
 			fputs (strLine, fpDEBUG);
 			fputs ("\r\n", fpDEBUG);
@@ -732,7 +729,7 @@ int renewTextAddr (FILE *fp, ULONG ulOldAddr, ULONG ulNewAddr)
 {
 	long lOrignalFpOffset = ftell (fp),
 	     lOffset;
-	DWORD dwData;
+	//DWORD dwData;
 	BYTE byOldAddr[4],
 	     byNewAddr[4];
 

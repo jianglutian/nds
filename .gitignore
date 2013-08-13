@@ -10,3 +10,4 @@ cscope.*
 *.sav
 1183export
 uncompress
+*.o

@@ -1,7 +1,8 @@
 #include <stdio.h>
 
-#include "../common.h"
-#include "../lib/dump.h"
+#include <common.h>
+#include <ctype.h>
+#include "dump.h"
 
 
 #define CODING_LENGTH	(0xffff)
