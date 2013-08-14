@@ -32,7 +32,7 @@ OBJ 	:= $(SRC:$(SRC_SFX)=$(OBJ_SFX))
 INCLUDE = -I../include
 
 # Lib files.
-LIB = -L../lib 
+LIB = -L../lib -lDump 
 
 # Debug or Release?
 MOD_DEBUG    = -D_DEBUG -g -c -Wall

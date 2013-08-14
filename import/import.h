@@ -1,18 +1,16 @@
-/*
-   No.177
-   001C2EC0,59
-   －－－－－－－－－－－－－－－－
-   These waters are treacherous!
-   You shouldn't come back here!
-   －－－－－－－－－－－－－－－－
-   These waters are treacherous!
-   You shouldn't come back here!
-   －－－－－－－－－－－－－－－－
-   =========================================
-   17个减号（16个汉字+一个控制符）
+// No.177
+// 001C2EC0,59
+// －－－－－－－－－－－－－－－－
+// These waters are treacherous!
+// You shouldn't come back here!
+// －－－－－－－－－－－－－－－－
+// These waters are treacherous!
+// You shouldn't come back here!
+// －－－－－－－－－－－－－－－－
+// =========================================
+// 17个减号（16个汉字+一个控制符）
 
-   当译文比原文长的时候需要有标记，方便导入时改变偏移地址
-   */
+// 当译文比原文长的时候需要有标记，方便导入时改变偏移地址
 
 #ifndef IMPORT_H
 #define IMPORT_H
@@ -23,14 +21,13 @@
 #include <ctype.h>
 #include "dump.h"
 
-#define DEBUG
 
-#ifdef DEBUG
+#ifdef _DEBUG
 //#define ENCODING_TEST
 //#define ENCODING_DEBUG
 //#define TXT_READ_DEBUG
 //#define DUMP_DEBUG
-#define DEBUG_TRACE
+//#define DEBUG_TRACE
 #endif
 
 
@@ -50,24 +47,21 @@ typedef struct txtExtent
 FILE *fpDEBUG;
 #endif
 
-FILE *fpError;
-long g_lErrorNo = 0;
-BYTE *g_pbyRom;
-long g_lRomLength = 0;
+FILE 	*fpError;
+long 	g_lErrorNo = 0;
+BYTE 	*g_pbyRom;
+long 	g_lRomLength = 0;
 
+void 	getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10], int *iarrLength);
+void 	getCodingLength (char strTable[CODING_LENGTH + 1][10], int * iarrLength);
 
-void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10]);
-void getCodingLength (char strTable[CODING_LENGTH + 1][10], int * iarrLength);
-int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt, 
-		char strTable[CODING_LENGTH + 1][10], int *iarrLength,
-		txtExt *linkList);
-int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLength,
-		BYTE *pbyteBuffer);
-void skipBOM (FILE *fp);
-char *fGetLine (char * strBuffer, FILE * fp);
-int fGetCutLine (char * strBuffer, FILE * fp);
-int renewTextAddr (FILE *fp, ULONG ulOldAddr, ULONG ulNewAddr);
-txtExt *getAddrTable (FILE *fp);
-int isInsertDirectly(ULONG ulAddr, txtExt * linkList);
+int 	changeRomTxt (FILE *fpRom, FILE * fpSrcTxt, char strTable[CODING_LENGTH + 1][10], int *iarrLength, txtExt *linkList);
+int 	handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLength, BYTE *pbyteBuffer);
+void 	skipBOM (FILE *fp);
+char 	*fGetLine (char * strBuffer, FILE * fp);
+int 	fGetCutLine (char * strBuffer, FILE * fp);
+int 	renewTextAddr (FILE *fp, ULONG ulOldAddr, ULONG ulNewAddr);
+txtExt 	*getAddrTable (FILE *fp);
+int 	isInsertDirectly(ULONG ulAddr, txtExt * linkList);
 
 #endif

@@ -1,11 +1,12 @@
 #include "import.h"
+#include "dump.h"
 
 int main (int argc, char *argv[])
 {
 	int	iMenuParam;	//程序调用参数解析用
 
 	//Rom的文件名
-	char strRom [MAX_FILE_NAME_LENGTH] = "PMFRUS_CHPLUS_RELEASE3.gba";
+	char strRom [MAX_FILE_NAME_LENGTH] = "pokem.gba";
 
 	//码表的文件名
 	char strCodingList [MAX_FILE_NAME_LENGTH] = "codingList.txt";	
@@ -30,13 +31,6 @@ int main (int argc, char *argv[])
 	int  iarrLength [CODING_LENGTH + 1];		//码表中各个字符串的长度
 	char strTable[CODING_LENGTH + 1][10] = {{0}};	//游戏的对照码表
 
-#ifdef DEBUG_TRACE
-	if (NULL == (fpDEBUG = fopen( "DEBUG.txt", "wb")))
-	{
-		printf ("Can't create \"DEBUG.txt\" file.\n");
-		return 1;
-	}
-#endif
 
 	//*************************************
 	//对命令行的参数进行解析
@@ -45,7 +39,7 @@ int main (int argc, char *argv[])
 	{
 		switch (iMenuParam)
 		{
-			//指定非超长处理的文件名
+				//指定非超长处理的文件名
 			case 'a':
 				if ('-' == optarg[0])
 				{
@@ -90,11 +84,11 @@ int main (int argc, char *argv[])
 					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
 				else
 					fprintf (stderr, "Unknown option character `\\x%x'.\n",	optopt);
-				printf ("口袋妖怪火红文本导入程序\n");
+				printf ("XXX文本导入程序\n");
 				printf ("%s [-r rom文件] [-c 码表文件] [-s 导入文本文件名] [-a 直接导入的文本区间文件]\n", argv[0]);
 				return 1;
 			default:
-				abort ();
+				exit (0);
 		}
 	}
 	//**************************************
@@ -145,8 +139,7 @@ int main (int argc, char *argv[])
 	}
 
 	//将码表存入字符串数组strTable里面
-	getCodingTable (fpCodingList, strTable);
-	getCodingLength (strTable, iarrLength);
+	getCodingTable (fpCodingList, strTable, iarrLength);
 
 	linkList = getAddrTable(fpDirAddr);
 
@@ -172,9 +165,6 @@ int main (int argc, char *argv[])
 	fclose (fpRom);
 	fclose (fpCodingList);
 	fclose (fpSrcTxt);
-#ifdef DEBUG_TRACE
-	fclose (fpDEBUG);
-#endif
 	printf ("Done.\n");
 	return 0;
 }
@@ -187,10 +177,11 @@ int main (int argc, char *argv[])
 //		这里我把索引为零的单独赋值为空格
 //输入参数：	fp	(指向码表文件的头)
 //		strTable(存储码表的数组)
+//		iarrLength(储存码表的字长)
 //返回值：	类型(void) 
-//修改记录：
+//修改记录： 增加第三个参数 iarrLength
 //==================================================================
-void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10])
+void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10], int *iarrLength)
 {
 	int iCount = 0;
 	long lOffset = 0;
@@ -210,7 +201,6 @@ void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10])
 		printf ("%d=%s\n", lOffset, strTable[lOffset]);
 #endif
 		++ iCount;
-
 	}
 #ifdef	ENCODING_DEBUG
 	printf ("iCount = %d\n", iCount);
@@ -231,6 +221,7 @@ void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10])
 			strcpy (strTable[iCount], strBuffer);
 		}
 	}
+	getCodingLength (strTable, iarrLength);
 }
 
 //==================================================================
@@ -318,6 +309,7 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 		//句子序号有跳变，可能漏了几句文本
 		if ( 0 != strcmp (strLine, strBuffer))
 		{
+			TRACE ("Maybe some sentence missed in txt.\n");
 			printf ("Maybe some sentence missed in txt.\n");
 			iTmp = atoi (strLine+ 3);
 			printf ("From %s jump to %s.\n\n", strBuffer, strLine);
@@ -353,6 +345,7 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 		//跳过对原文的处理
 		while (0 == fGetCutLine (strLine, fpSrcTxt))
 			;
+
 		//到这里获取完原文，下面的就是译文的处理
 
 		iTranslatedLength = 0;
@@ -374,7 +367,6 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 			{
 				printf ("No. %d has unknow char.\n", iSentenceCount);
 				sprintf (strBuffer, "No. %d has unknow char.\n", iSentenceCount);
-				//fputs (strBuffer, fpError);
 				iSkip = 1;
 				while (0 == fGetCutLine (strLine, fpSrcTxt))
 					;
@@ -448,13 +440,11 @@ int changeRomTxt (FILE *fpRom, FILE * fpSrcTxt,
 int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLength,
 		BYTE *pbyteBuffer)
 {
-	int fUnknowCode = 0,
-		iLength = 0,
-		iCount = 0,
-		iStrLength = strlen (strLine);
-	char *pchLocate = strLine,
-		 //*pchTmp,
-		 strBuf[MAX_STRING_LENGTH];
+	int fUnknowCode = 0;
+	int iLength = 0;
+	int iCount = 0;
+	int iStrLength = strlen (strLine);
+	char *pchLocate = strLine;
 
 	//开始分析这一行的字符直至结束
 	while ((0 != strcmp (pchLocate, "")) 
@@ -490,7 +480,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 		}
 
 		if (0 == fUnknowCode)
-			goto FIND;
+			break;
 
 		//这里分析有关控制字符串的（就是变长字节的一些参数）
 		for (iCount = 0; iCount <= CTRL_COUNT; ++iCount)
@@ -527,7 +517,7 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 		}
 
 		if (0 == fUnknowCode)
-			goto FIND;
+			break;
 
 		//分析是不是形如[XXh]的二进制形式
 
@@ -554,18 +544,12 @@ int handleLine (char *strLine, char strTable[CODING_LENGTH + 1][10], int *iarrLe
 		//如果遇到码表中不存在的字符，返回错误
 		if (0 != fUnknowCode)
 		{
-#ifdef DEBUG_TRACE
-			sprintf (strBuf, "NO.%ld:\r\n", g_lErrorNo);
-			fputs (strBuf, fpDEBUG);
-			fputs (strLine, fpDEBUG);
-			fputs ("\r\n", fpDEBUG);
-			fputs (pchLocate, fpDEBUG);
-			fputs ("\r\n", fpDEBUG);
-			fputs ("--------------------------------\r\n", fpDEBUG);
-#endif
+			DEBUG ("NO.%ld:", g_lErrorNo);
+			DEBUG (strLine);
+			DEBUG (pchLocate);
+			DEBUG ("--------------------------------\r\n");
 			return -1;
 		}
-FIND:			;
 	}
 	//分析完成
 
@@ -779,3 +763,91 @@ int isInsertDirectly(ULONG ulAddr, txtExt * linkList)
 	}
 	return 0;
 }
+
+#ifdef FUCK
+#include <stdio.h>     /* for printf */
+#include <stdlib.h>    /* for exit */
+#include <getopt.h>
+
+int handleArgs(int argc, char **argv)
+{
+	int c;
+	int digit_optind = 0;
+
+	while (1) {
+		int this_option_optind = optind ? optind : 1;
+		int option_index = 0;
+
+           struct option {
+               const char *name;
+               int         has_arg; // no_argument(0) required_argument(1) optional_argument(2)
+               int        *flag;
+               int         val;
+           };
+		static struct option long_options[] = {
+			{"add",     required_argument, 0,  0 },
+			{"append",  no_argument,       0,  0 },
+			{"delete",  required_argument, 0,  0 },
+			{"verbose", no_argument,       0,  0 },
+			{"create",  required_argument, 0, 'c'},
+			{"file",    required_argument, 0,  0 },
+			{0,         0,                 0,  0 }
+		};
+
+		c = getopt_long(argc, argv, "abc:d:012",
+				long_options, &option_index);
+		if (c == -1)
+			break;
+
+		switch (c) {
+			case 0:
+				printf("option %s", long_options[option_index].name);
+				if (optarg)
+					printf(" with arg %s", optarg);
+				printf("\n");
+				break;
+
+			case '0':
+			case '1':
+			case '2':
+				if (digit_optind != 0 && digit_optind != this_option_optind)
+					printf("digits occur in two different argv-elements.\n");
+				digit_optind = this_option_optind;
+				printf("option %c\n", c);
+				break;
+
+			case 'a':
+				printf("option a\n");
+				break;
+
+			case 'b':
+				printf("option b\n");
+				break;
+
+			case 'c':
+				printf("option c with value '%s'\n", optarg);
+				break;
+
+			case 'd':
+				printf("option d with value '%s'\n", optarg);
+				break;
+
+			case '?':
+				break;
+
+			default:
+				printf("?? getopt returned character code 0%o ??\n", c);
+		}
+	}
+
+	if (optind < argc) {
+		printf("non-option ARGV-elements: ");
+		while (optind < argc)
+			printf("%s ", argv[optind++]);
+		printf("\n");
+	}
+
+	exit(EXIT_SUCCESS);
+}
+#endif
+

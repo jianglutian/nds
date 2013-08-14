@@ -2,7 +2,6 @@
 #define COMMON_H
 
 #include <stdio.h>
-//#include <conio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
@@ -14,12 +13,17 @@
 #include <unistd.h> 
 #endif
 
+typedef unsigned char 	BOOL;
+//typedef bool 		 	BOOL;
 typedef unsigned char 	BYTE;
 typedef unsigned short 	WORD;
 typedef unsigned long 	ULONG;
 typedef unsigned long 	DWORD;
 typedef int 			INT;
 typedef unsigned int 	UINT;
+
+#define TRUE 	1
+#define FALSE 	0
 
 
 #define MAX_FILE_NAME_LENGTH 	127			//文件名的最大长度
