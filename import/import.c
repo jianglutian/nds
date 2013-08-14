@@ -1,6 +1,5 @@
 #include "import.h"
 
-
 int main (int argc, char *argv[])
 {
 	int	iMenuParam;	//程序调用参数解析用

@@ -14,15 +14,17 @@
 #include <unistd.h> 
 #endif
 
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef unsigned long ULONG;
-typedef unsigned long DWORD;
+typedef unsigned char 	BYTE;
+typedef unsigned short 	WORD;
+typedef unsigned long 	ULONG;
+typedef unsigned long 	DWORD;
+typedef int 			INT;
+typedef unsigned int 	UINT;
 
 
-#define MAX_FILE_NAME_LENGTH 127	//文件名的最大长度
-#define MAX_FILE_COUNT 0xfff
-#define MAX_STRING_LENGTH 0xFF		//字符串的最大长度
+#define MAX_FILE_NAME_LENGTH 	127			//文件名的最大长度
+#define MAX_FILE_COUNT 			0xfff
+#define MAX_STRING_LENGTH 		0xFF		//字符串的最大长度
 
 #define FILL_BYTE	((BYTE)(0xff))
 #define ZERO_BYTE	((BYTE)(0x00))

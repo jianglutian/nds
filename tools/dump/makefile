@@ -13,7 +13,7 @@ CC 		= gcc
 AR 		= ar rcs
 
 # Object name you want to make, you can change it as you wish.
-PROG 	= ../lib/libDump.a
+PROG 	= ../../lib/libDump.a
 
 # This is the path for source files, many times "." is enough.
 # Though, you can fit with a absolute path.
@@ -30,10 +30,10 @@ SRC	= $(foreach n, $(wildcard $(addprefix $(SRC_DIR)/*, $(SRC_SFX))), $(n))
 OBJ 	:= $(SRC:$(SRC_SFX)=$(OBJ_SFX))
 
 # Include files.
-INCLUDE = -I../include
+INCLUDE = -I../../include
 
 # Lib files.
-LIB = -L../lib 
+LIB = -L../../lib 
 
 # Debug or Release?
 MOD_DEBUG    = -D_DEBUG -g -c -Wall
