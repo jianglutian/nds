@@ -19,7 +19,6 @@
 
 #include <common.h>
 #include <ctype.h>
-#include "dump.h"
 
 
 #ifdef _DEBUG
@@ -31,7 +30,6 @@
 #endif
 
 
-#define CODING_LENGTH	(0xffff)
 
 WORD pwCtrlCodeIndex[] = {0xFC, 0xFD};
 #define CTRL_COUNT (sizeof (pwCtrlCodeIndex) / sizeof (pwCtrlCodeIndex[0]))

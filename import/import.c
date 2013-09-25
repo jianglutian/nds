@@ -1,5 +1,6 @@
 #include "import.h"
 #include "dump.h"
+#include "ControlChar.h"
 
 int main (int argc, char *argv[])
 {
@@ -39,8 +40,8 @@ int main (int argc, char *argv[])
 	{
 		switch (iMenuParam)
 		{
-				//指定非超长处理的文件名
 			case 'a':
+			//指定非超长处理的文件名
 				if ('-' == optarg[0])
 				{
 					printf ("Option -%c requires an argument.\n", iMenuParam);
@@ -48,8 +49,8 @@ int main (int argc, char *argv[])
 				}
 				strcpy (strDirAddr, optarg);
 				break;
-				//指定码表文件名
 			case 'c':
+			//指定码表文件名
 				if ('-' == optarg[0])
 				{
 					printf ("Option -%c requires an argument.\n", iMenuParam);
@@ -57,8 +58,8 @@ int main (int argc, char *argv[])
 				}
 				strcpy (strCodingList, optarg);
 				break;
-				//指定导入文本文件名
 			case 's':
+				//指定导入文本文件名
 				if ('-' == optarg[0])
 				{
 					printf ("Option -%c requires an argument.\n", iMenuParam);
@@ -66,8 +67,8 @@ int main (int argc, char *argv[])
 				}
 				strcpy (strSrcTxt, optarg);
 				break;
-				//指定rom文件名
 			case 'r':
+				//指定rom文件名
 				if ('-' == optarg[0])
 				{
 					printf ("Option -%c requires an argument.\n", iMenuParam);
@@ -222,24 +223,6 @@ void getCodingTable (FILE * fp, char strTable[CODING_LENGTH + 1][10], int *iarrL
 		}
 	}
 	getCodingLength (strTable, iarrLength);
-}
-
-//==================================================================
-//函数名：	insertCtrlCoding
-//作者：	蒋乐天
-//日期：	2011.08.14
-//功能：	在码表中插入变量（不定长）
-//		将相应的
-//输入参数：	strTable	存放码表的字符串数组
-//		iarrLength	存放码表字符串长度的数组
-//返回值：	类型(void)
-//修改记录：
-//==================================================================
-void insertCtrlCoding (char strTable[CODING_LENGTH + 1][10], int *iarrLength)
-{
-	//TODO:
-	//	这里面还什么都没动。
-	return;
 }
 
 //==================================================================
@@ -696,6 +679,7 @@ int renewTextAddr (FILE *fp, ULONG ulOldAddr, ULONG ulNewAddr)
 	fseek (fp, lOrignalFpOffset, SEEK_SET);
 	return 1;
 }
+
 //将记录文本区间的数据读入txtExt链表中，返回链表头
 txtExt *getAddrTable (FILE *fp)
 {
@@ -764,7 +748,7 @@ int isInsertDirectly(ULONG ulAddr, txtExt * linkList)
 	return 0;
 }
 
-#ifdef FUCK
+#ifdef FUCK // 没用的参考代码
 #include <stdio.h>     /* for printf */
 #include <stdlib.h>    /* for exit */
 #include <getopt.h>

@@ -35,4 +35,6 @@ typedef unsigned int 	UINT;
 
 #define WAIT	sleep(1000)
 
+#define CODING_LENGTH	(0xffff)
+
 #endif
