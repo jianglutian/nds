@@ -22,6 +22,16 @@ typedef unsigned long 	DWORD;
 typedef int 			INT;
 typedef unsigned int 	UINT;
 
+typedef signed char 	INT8;
+typedef signed short 	INT16;
+typedef signed int 	    INT32;
+typedef signed long 	INT64;
+
+typedef unsigned char 	UINT8;
+typedef unsigned short 	UINT16;
+typedef unsigned int 	UINT32;
+typedef unsigned long 	UINT64;
+
 #define TRUE 	1
 #define FALSE 	0
 
@@ -37,4 +47,4 @@ typedef unsigned int 	UINT;
 
 #define CODING_LENGTH	(0xffff)
 
-#endif
+#endif // #ifndef COMMON_H

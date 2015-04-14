@@ -10,10 +10,9 @@
 
 # Judged by compiler, you can specify it.
 CC 		= gcc
-AR 		= ar rcs
 
 # Object name you want to make, you can change it as you wish.
-PROG 	= ../../lib/libDump.a
+PROG 	= ../bin/PicTrans/PicTrans.exe
 
 # This is the path for source files, many times "." is enough.
 # Though, you can fit with a absolute path.
@@ -30,10 +29,10 @@ SRC	= $(foreach n, $(wildcard $(addprefix $(SRC_DIR)/*, $(SRC_SFX))), $(n))
 OBJ 	:= $(SRC:$(SRC_SFX)=$(OBJ_SFX))
 
 # Include files.
-INCLUDE = -I../../include
+INCLUDE = -I../include
 
 # Lib files.
-LIB = -L../../lib 
+LIB = -L../lib -lDump 
 
 # Debug or Release?
 MOD_DEBUG    = -D_DEBUG -g -c -Wall
@@ -42,7 +41,7 @@ MOD_RELEASE  = -DNDEBUG -c -Wall -O2
 MOD = $(MOD_DEBUG)
 
 $(PROG):$(OBJ)
-	$(AR) $(PROG) $(OBJ) 
+	$(CC) -o $(PROG) $(OBJ) $(LIB)
 $(OBJ):$(SRC)
 	$(CC) $(SRC) $(MOD) $(INCLUDE) 
 
