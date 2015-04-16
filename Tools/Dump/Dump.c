@@ -87,3 +87,4 @@ void LogDumpInfo(FILE *fpStream, const char *format, ...)
 	va_end(ap);
 	fprintf(fpStream, "\r\n");
 }		// -----  end of function LogDumpInfo  ----- //
+

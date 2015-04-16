@@ -31,7 +31,8 @@ typedef enum
 } ETitleBit;
 
 static BOOL ParamParse(int argc, char *argv[], 
-        char strData[], char strOutFile[], ETitleBit* pType);
+        char strData[], char strOutFile[], 
+        ETitleBit* pType, UINT32* pStartIndex, UINT32* pCount);
 static void DumpHelp (const char* strName);
 static void* LoadFile (const char* strData, UINT32* pdwLength);
 static BOOL TransData (ETitleBit eType, void* pData, UINT32 dwDataLength, 
@@ -39,3 +40,4 @@ static BOOL TransData (ETitleBit eType, void* pData, UINT32 dwDataLength,
 static BOOL WriteFile (const char* strOutFile, void* pData, UINT32 dwLength);
 
 #endif // #ifndef PIC_TRANS_H
+

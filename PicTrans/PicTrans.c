@@ -19,6 +19,18 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "Dump.h"
+
+UINT8 szTransMap[] =
+{
+    0,  4,  1,  5,
+    8,  12, 9,  13,
+    2,  6,  3,  7,
+    10, 14, 11, 15
+};
+
+UINT8 byMapSize = sizeof(szTransMap)/sizeof(UINT8);
+
 // ===  FUNCTION  ======================================================================
 //         Name:  main
 //  Description:  程序主函数
@@ -33,14 +45,13 @@ int main ( int argc, char *argv[] )
 	// 码表的文件名
 	char strOutFile [MAX_FILE_NAME_LENGTH] = "out.bin";	
 
-    ETitleBit eType = 0;
-
+    ETitleBit eType = 0;        // 像素Bit数类型
 
     UINT32 dwDataLength = 0;    // 数据长度
     void* pData = NULL;         // 数据
 
     UINT32 dwStartIndex = 0;    // 目标数据起始偏移量
-    UINT32 dwCount = 0;         // 目标数据个数
+    UINT32 dwCount = 1;         // 目标数据个数
 
 #ifdef DEBUG
 	FILE	* fpTest = NULL;   // 调试输出用文件
@@ -48,9 +59,10 @@ int main ( int argc, char *argv[] )
 
 #ifdef DEBUG
 	fpTest = fopen ("Log.txt", "wt");
+    LogDumpInit();
 #endif
 
-    bRet = ParamParse(argc, argv, strData, strOutFile, &eType);
+    bRet = ParamParse(argc, argv, strData, strOutFile, &eType, &dwStartIndex, &dwCount);
     if (!bRet)
         return EXIT_FAILURE;
 
@@ -81,13 +93,15 @@ int main ( int argc, char *argv[] )
 //         Name:  ParamParse
 //  Description:  参数解析
 // =====================================================================================
-BOOL ParamParse(int argc, char *argv[], char strData[], char strOutFile[], ETitleBit* pType)
+BOOL ParamParse(int argc, char *argv[], 
+        char strData[], char strOutFile[], 
+        ETitleBit* pType, UINT32* pStartIndex, UINT32* pCount)
 {
 	int	iMenuParam = 0;	// 程序调用参数解析用
 
     // =====================================================================================
 	// 对命令行的参数进行解析
-	while ((iMenuParam = getopt (argc, argv, "d:o:b:h:")) != -1)
+	while ((iMenuParam = getopt (argc, argv, "d:o:b:h:s:c:")) != -1)
 	{
 		switch (iMenuParam)
 		{
@@ -97,6 +111,7 @@ BOOL ParamParse(int argc, char *argv[], char strData[], char strOutFile[], ETitl
 					fprintf(stderr, "Option -%c requires an argument.\n", iMenuParam);
                     return FALSE;
 				}
+                strcpy(strData, optarg);
 				break;
 			case 'o': // 指定输出文件
 				if ('-' == optarg[0])
@@ -104,6 +119,7 @@ BOOL ParamParse(int argc, char *argv[], char strData[], char strOutFile[], ETitl
 					fprintf(stderr, "Option -%c requires an argument.\n", iMenuParam);
                     return FALSE;
 				}
+                strcpy(strOutFile, optarg);
 				break;
 			case 'b': // 指定数据格式
 				if ('-' == optarg[0])
@@ -111,18 +127,33 @@ BOOL ParamParse(int argc, char *argv[], char strData[], char strOutFile[], ETitl
 					fprintf(stderr, "Option -%c requires an argument.\n", iMenuParam);
                     return FALSE;
 				}
+                *pType = (ETitleBit) atoi(optarg);
+				break;
+            case 'c':
+				if ('-' == optarg[0])
+				{
+					fprintf(stderr, "Option -%c requires an argument.\n", iMenuParam);
+                    return FALSE;
+				}
+                *pCount = atoi(optarg);
+				break;
+            case 's':
+				if ('-' == optarg[0])
+				{
+					fprintf(stderr, "Option -%c requires an argument.\n", iMenuParam);
+                    return FALSE;
+				}
+                *pStartIndex = atoi(optarg);
 				break;
 			case '?':
-				if ('c' == optopt || 'r' == optopt || 's' == optopt ||'a' == optopt)
-					;
-				else if (optopt == '?')
+			default:
+				if ('d' == optopt || 'o' == optopt || 'b' == optopt)
 					;
 				else if (isprint (optopt))
 					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
 				else
 					fprintf (stderr, "Unknown option character `\\x%x'.\n",	optopt);
                 DumpHelp(argv[0]);
-			default:
                 return FALSE;
 		}
 	}
@@ -138,7 +169,7 @@ BOOL ParamParse(int argc, char *argv[], char strData[], char strOutFile[], ETitl
 void DumpHelp (const char* strName)
 {
     fprintf(stderr, "图片转换:\n");
-    fprintf(stderr, "%s [-b 数据文件] [-b 数据格式（4/8/16/24/32）] [-o 生成文件]\n", strName);
+    fprintf(stderr, "%s [-d 数据文件] [-b 数据格式（4/8/16/24/32）] [-o 生成文件] [-s 起始偏移量] [-c 数据个数]\n", strName);
 }		// -----  end of function DumpHelp  ----- //
 
 // ===  FUNCTION  ======================================================================
@@ -181,8 +212,13 @@ void* LoadFile (const char* strData, UINT32* pdwLength)
 BOOL TransData (ETitleBit eType, void* pData, UINT32 dwDataLength, 
         UINT32 dwStartIndex, UINT32 dwCount)
 {
-    // TODO: 
     BOOL bRet = FALSE;
+    UINT8 byPixel = 0;
+    void* pTmpData = NULL;
+    UINT32 dwIndex = 0;
+    UINT32 dwBlockSize = 0;
+    UINT32 dwTmpCount = 0;
+
     if (!pData)
         return bRet;
     switch (eType)
@@ -192,12 +228,45 @@ BOOL TransData (ETitleBit eType, void* pData, UINT32 dwDataLength,
         case eTB16Bit:
         case eTB24Bit:
         case eTB32Bit:
+            byPixel = (UINT8)eType * 2 / 8;
             break;
         default:
             fprintf(stderr, "Invalid ETitleBit: %d\n", eType);
             return bRet;
             break;
     }
+
+    dwBlockSize = byPixel * 16;
+
+    if (!dwCount)
+        dwCount = (dwDataLength - dwStartIndex) / dwBlockSize;
+
+    if (dwDataLength < dwStartIndex + dwCount * dwBlockSize)
+        return bRet;
+
+    for (dwTmpCount = 0; dwTmpCount < dwCount; ++dwTmpCount)
+    {
+        pTmpData = malloc(byPixel * 16);
+        if (!pTmpData)
+            return bRet;
+        memcpy(pTmpData, pData + dwStartIndex + dwTmpCount * dwBlockSize, byPixel * 16);
+        for(dwIndex = 0; dwIndex < byMapSize; ++dwIndex)
+        {
+            memcpy(pData + dwStartIndex + dwTmpCount * dwBlockSize + szTransMap[dwIndex] * byPixel, pTmpData + dwIndex * byPixel, byPixel);
+        }
+#ifdef DEBUG
+        fprintf(stderr, "%d/%d:\n", dwTmpCount, dwCount);
+        fprintf(stderr, "SrcData:\n");
+        DumpHexData(stderr, pTmpData, byPixel * 16);
+        fprintf(stderr, "DstData:\n");
+        DumpHexData(stderr, pData + dwStartIndex, byPixel * 16);
+        fprintf(stderr, "\n");
+#endif
+    }
+
+
+    free(pTmpData);
+
     bRet = TRUE;
     return bRet;
 }		// -----  end of function TransData  ----- //

@@ -2,7 +2,7 @@
 //
 //       Filename:  Dump.h
 //
-//    Description:  
+//    Description:  各种调试输出
 //
 //        Version:  1.0
 //        Created:  2015年02月27日 14时44分57秒
@@ -17,7 +17,7 @@
 #ifndef DUMP_H
 #define DUMP_H
 
-#include "common.h"
+#include "Common.h"
 
 extern FILE *g_fpTRACE;
 extern FILE *g_fpDEBUG;
